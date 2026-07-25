@@ -1,0 +1,8 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/extract/route": "/api/extract",
+  "/api/inspect/route": "/api/inspect",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/"
+}
