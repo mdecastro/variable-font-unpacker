@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 import type { FontAxis } from "./types";
 
 type FontPreviewProps = {
@@ -18,6 +19,7 @@ export default function FontPreview({
   axes,
   axisValues,
 }: FontPreviewProps) {
+  const { t } = useI18n();
   const [text, setText] = useState(
     "The quick brown fox jumps over the lazy dog — 0123456789",
   );
@@ -60,14 +62,14 @@ export default function FontPreview({
           <span
             className={`h-1.5 w-1.5 rounded-full ${ready ? "bg-axis-teal" : "bg-axis-amber"}`}
           />
-          {ready ? "Fuente cargada" : "Cargando fuente…"}
+          {ready ? t.previewLoaded : t.previewLoading}
         </span>
       </div>
       <input
         value={text}
         onChange={(event) => setText(event.target.value)}
         className="mb-4 w-full rounded-md border border-ink/15 px-3 py-2 text-sm text-ink outline-none focus:border-axis-blue"
-        placeholder="Texto de previsualización"
+        placeholder={t.previewPlaceholder}
       />
       <p
         style={{

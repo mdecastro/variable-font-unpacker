@@ -28,10 +28,20 @@
 }
 
 body {
+  position: relative;
   min-height: 100vh;
   color: var(--color-paper);
   background-color: var(--color-ink);
-  background-repeat: no-repeat;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--color-ink);
   background-image:
     radial-gradient(
       ellipse 900px 700px at 8% -10%,
@@ -53,7 +63,6 @@ body {
       color-mix(in srgb, var(--color-axis-teal) 35%, transparent),
       transparent 55%
     );
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 .gradient-text {

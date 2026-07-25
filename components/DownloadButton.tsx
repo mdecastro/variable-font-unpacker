@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 type DownloadButtonProps = {
   file: File;
@@ -13,12 +14,15 @@ export default function DownloadButton({
   axisValues,
   styleName,
 }: DownloadButtonProps) {
+  const { t } = useI18n();
   const [isExtracting, setIsExtracting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<
+    "extractFailed" | "unexpectedError" | null
+  >(null);
 
   const handleDownload = async () => {
     setIsExtracting(true);
-    setError(null);
+    setErrorKey(null);
 
     try {
       const formData = new FormData();
@@ -32,8 +36,8 @@ export default function DownloadButton({
       });
 
       if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.detail ?? "No se pudo extraer la instancia.");
+        setErrorKey("extractFailed");
+        return;
       }
 
       const disposition = response.headers.get("content-disposition") ?? "";
@@ -47,8 +51,8 @@ export default function DownloadButton({
       link.download = filename;
       link.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado.");
+    } catch {
+      setErrorKey("unexpectedError");
     } finally {
       setIsExtracting(false);
     }
@@ -61,9 +65,11 @@ export default function DownloadButton({
         disabled={isExtracting}
         className="w-full rounded-md bg-gradient-to-r from-axis-blue-deep to-axis-magenta-deep px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isExtracting ? "Extrayendo…" : "Descargar instancia estática"}
+        {isExtracting ? t.downloading : t.download}
       </button>
-      {error && <p className="mt-2 text-xs text-axis-magenta">{error}</p>}
+      {errorKey && (
+        <p className="mt-2 text-xs text-axis-magenta">{t[errorKey]}</p>
+      )}
     </div>
   );
 }

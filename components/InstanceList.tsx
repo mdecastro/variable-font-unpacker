@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n";
 import type { FontAxis, NamedInstance } from "./types";
 
 type InstanceListProps = {
@@ -26,12 +27,14 @@ export default function InstanceList({
   onSelectInstance,
   onAxisValueChange,
 }: InstanceListProps) {
+  const { t } = useI18n();
+
   return (
     <div className="space-y-6">
       {namedInstances.length > 0 && (
         <div>
           <h3 className="mb-2 font-mono text-xs font-semibold tracking-wide text-paper/50 uppercase">
-            Instancias con nombre
+            {t.namedInstances}
           </h3>
           <div className="flex flex-wrap gap-2">
             {namedInstances.map((instance) => (
@@ -53,9 +56,9 @@ export default function InstanceList({
 
       <div>
         <h3 className="mb-2 font-mono text-xs font-semibold tracking-wide text-paper/50 uppercase">
-          Ejes de variación
+          {t.axes}
         </h3>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
           {axes.map((axis, index) => {
             const accent = AXIS_COLORS[index % AXIS_COLORS.length];
             return (

@@ -29,13 +29,15 @@ A new `lib/i18n.tsx` owns three responsibilities:
 
 1. **Dictionary** — `const dictionaries = { es, en }` where every key exists in both. The English object is typed against the Spanish one (`Record<keyof typeof es, string>`) so a missing translation is a compile error.
 2. **Resolution** — on mount, read `localStorage` first; fall back to `navigator.language.toLowerCase().startsWith("es") ? "es" : "en"`. An explicit choice always beats browser detection.
-3. **Distribution** — a `LanguageProvider` client component holding `lang` state, plus a `useI18n()` hook returning `{ t, lang, setLang }`. `setLang` writes to `localStorage`.
+3. **Distribution** — the resolved language lives in a module-level store read through `useSyncExternalStore`, whose server snapshot is the default language. A `LanguageProvider` client component subscribes once and exposes `{ t, lang, setLang }` through context via a `useI18n()` hook. `setLang` writes to `localStorage` and notifies subscribers.
+
+The external store matters here: resolving the language inside a `useEffect` would mean calling `setState` from an effect, which the React compiler lint rule `react-hooks/set-state-in-effect` rejects. `useSyncExternalStore` expresses the same "server default, then client value" sequence as a first-class pattern.
 
 Components call `useI18n()` directly rather than receiving translated strings as props, so no prop threading is needed.
 
 ## Initial render behavior
 
-`navigator` does not exist during server rendering, so the provider's initial state is `"es"` and detection runs in a `useEffect` after hydration. An English-language browser therefore sees one frame of Spanish before the switch. This is a deliberate trade: eliminating it requires reading `Accept-Language` in middleware and persisting a cookie, which is out of scope.
+`navigator` does not exist during server rendering, so the server snapshot is `"es"` and detection happens on the client's first commit. An English-language browser therefore sees one frame of Spanish before the switch. This is a deliberate trade: eliminating it requires reading `Accept-Language` in middleware and persisting a cookie, which is out of scope.
 
 Because the pre-hydration render is Spanish, `app/layout.tsx` changes its server-rendered `<html lang="en">` to `lang="es"` so the attribute matches the markup it ships with. The provider effect then updates `document.documentElement.lang` to the resolved language, keeping it accurate for screen readers.
 
@@ -56,6 +58,8 @@ A small `ES / EN` control in the top-right of the header in `app/page.tsx`, styl
 The preview's default sample text ("The quick brown fox…") stays English in both languages: it is a pangram chosen to exercise glyphs, not UI copy.
 
 Error responses from `/api/extract` return a generic English `detail` ("Extraction failed"); the client keeps using its own translated fallback message rather than surfacing that string.
+
+Error state is stored as a dictionary key rather than a rendered message, so an error already on screen re-renders in the new language when the visitor toggles.
 
 ## Files to change
 

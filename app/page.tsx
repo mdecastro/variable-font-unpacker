@@ -6,8 +6,35 @@ import FontPreview from "@/components/FontPreview";
 import InstanceList from "@/components/InstanceList";
 import DownloadButton from "@/components/DownloadButton";
 import type { FontInfo, NamedInstance } from "@/components/types";
+import { useI18n, type Language } from "@/lib/i18n";
+
+function LanguageToggle() {
+  const { lang, setLang } = useI18n();
+  const options: Language[] = ["es", "en"];
+
+  return (
+    <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em]">
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => setLang(option)}
+          aria-pressed={lang === option}
+          className={`transition-colors ${
+            lang === option
+              ? "text-axis-teal"
+              : "text-paper/40 hover:text-paper/70"
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [fontInfo, setFontInfo] = useState<FontInfo | null>(null);
   const [axisValues, setAxisValues] = useState<Record<string, number>>({});
@@ -15,11 +42,13 @@ export default function Home() {
     null,
   );
   const [isInspecting, setIsInspecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState<
+    "inspectFailed" | "unexpectedError" | null
+  >(null);
 
   const handleFileAccepted = async (nextFile: File) => {
     setIsInspecting(true);
-    setError(null);
+    setErrorKey(null);
     setFontInfo(null);
 
     try {
@@ -31,21 +60,20 @@ export default function Home() {
         body: formData,
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.detail ?? "No se pudo inspeccionar la fuente.");
+        setErrorKey("inspectFailed");
+        return;
       }
 
-      const info = data as FontInfo;
+      const info = (await response.json()) as FontInfo;
       setFile(nextFile);
       setFontInfo(info);
       setSelectedInstanceName(null);
       setAxisValues(
         Object.fromEntries(info.axes.map((axis) => [axis.tag, axis.defaultValue])),
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado.");
+    } catch {
+      setErrorKey("unexpectedError");
     } finally {
       setIsInspecting(false);
     }
@@ -66,17 +94,19 @@ export default function Home() {
     <div className="flex flex-1 flex-col items-center px-6 py-16 md:px-10 lg:py-24">
       <div className="w-full max-w-[1400px] space-y-12">
         <header className="w-full text-center lg:text-left">
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-axis-teal">
-            TTF · OTF · fvar
-          </p>
+          <div className="flex items-center justify-center gap-4 lg:justify-between">
+            <p className="font-mono text-xs uppercase tracking-[0.3em] text-axis-teal">
+              {t.heroKicker}
+            </p>
+            <LanguageToggle />
+          </div>
           <h1 className="hero-title gradient-text mt-3 font-display text-6xl leading-[0.95] tracking-tight uppercase sm:text-7xl lg:text-8xl">
             Variable Font
             <br />
             Unpacker
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-paper/70 lg:mx-0 lg:text-lg">
-            Subí una fuente variable, movés sus ejes en vivo y descargás la
-            instancia estática exacta que necesitás.
+            {t.heroSubtitle}
           </p>
         </header>
 
@@ -84,27 +114,25 @@ export default function Home() {
 
         {isInspecting && (
           <p className="text-center font-mono text-sm text-paper/60">
-            Inspeccionando fuente…
+            {t.inspecting}
           </p>
         )}
 
-        {error && (
-          <p className="text-center text-sm text-axis-magenta">{error}</p>
+        {errorKey && (
+          <p className="text-center text-sm text-axis-magenta">{t[errorKey]}</p>
         )}
 
         {file && fontInfo && (
-          <div className="grid w-full items-start gap-8 lg:grid-cols-5">
-            <div className="lg:sticky lg:top-8 lg:col-span-3">
-              <FontPreview
-                key={`${file.name}-${file.size}-${file.lastModified}`}
-                file={file}
-                familyName={fontInfo.familyName}
-                axes={fontInfo.axes}
-                axisValues={axisValues}
-              />
-            </div>
+          <div className="flex w-full flex-col gap-8">
+            <FontPreview
+              key={`${file.name}-${file.size}-${file.lastModified}`}
+              file={file}
+              familyName={fontInfo.familyName}
+              axes={fontInfo.axes}
+              axisValues={axisValues}
+            />
 
-            <div className="space-y-6 rounded-2xl border border-white/10 bg-ink-2/60 p-6 backdrop-blur lg:col-span-2">
+            <div className="space-y-6 rounded-2xl border border-white/10 bg-ink-2/60 p-6 backdrop-blur">
               <InstanceList
                 axes={fontInfo.axes}
                 namedInstances={fontInfo.namedInstances}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 const ACCEPTED_EXTENSIONS = [".ttf", ".otf"];
 
@@ -14,18 +15,19 @@ function isVariableFontFile(file: File): boolean {
 }
 
 export default function Dropzone({ onFileAccepted }: DropzoneProps) {
+  const { t } = useI18n();
   const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     (file: File | undefined) => {
       if (!file) return;
       if (!isVariableFontFile(file)) {
-        setError("Subí un archivo .ttf o .otf.");
+        setHasError(true);
         return;
       }
-      setError(null);
+      setHasError(false);
       onFileAccepted(file);
     },
     [onFileAccepted],
@@ -57,13 +59,13 @@ export default function Dropzone({ onFileAccepted }: DropzoneProps) {
         className="hidden"
         onChange={(event) => handleFile(event.target.files?.[0])}
       />
-      <p className="font-medium text-paper">
-        Arrastrá una fuente variable acá, o hacé click para elegir un archivo
-      </p>
+      <p className="font-medium text-paper">{t.dropzoneCta}</p>
       <p className="mt-1 font-mono text-xs text-paper/50">
-        Formatos soportados: .ttf, .otf
+        {t.dropzoneFormats}
       </p>
-      {error && <p className="mt-2 text-xs text-axis-magenta">{error}</p>}
+      {hasError && (
+        <p className="mt-2 text-xs text-axis-magenta">{t.dropzoneWrongType}</p>
+      )}
     </div>
   );
 }
